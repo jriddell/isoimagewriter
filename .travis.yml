@@ -24,7 +24,7 @@ install:
   - # And more dependencies
   - mkdir deps ; cd deps
   - wget -c "http://embra.edinburghlinux.co.uk/~jr/tmp/gpgmebits-trusty.tar.gz"
-  - tar xvf gpgmebits-trusty.tar.gz
+  - tar xv gpgmebits-trusty.tar.gz
   - find . -name '*.deb' -exec dpkg -i {} \;
   - cd ..
 
