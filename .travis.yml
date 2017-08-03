@@ -21,6 +21,12 @@ install:
   - cmake ..
   - make && sudo make install
   - cd ../..
+  - # And more dependencies
+  - mkdir deps ; cd deps
+  - wget -c "http://embra.edinburghlinux.co.uk/~jr/tmp/gpgmebits-trusty.tar.gz"
+  - tar xvf gpgmebits-trusty.tar.gz
+  - find . -name '*.deb' -exec dpkg -i {} \;
+  - cd ..
 
 script:
   - cmake . -DCMAKE_INSTALL_PREFIX=/usr
