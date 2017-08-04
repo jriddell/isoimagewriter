@@ -23,7 +23,7 @@ install:
   - cd ../..
   - # And more dependencies
   - mkdir deps ; cd deps
-  - wget -c "http://embra.edinburghlinux.co.uk/~jr/tmp/gpgmebits-trusty.tar.gz"
+  - wget -c "http://embra.edinburghlinux.co.uk/~jr/gpgmebits-trusty.tar.gz"
   - tar xf gpgmebits-trusty.tar.gz
   - find . -name '*.deb' -exec sudo dpkg -i {} \;
   - cd ..
