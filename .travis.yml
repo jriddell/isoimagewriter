@@ -27,7 +27,14 @@ install:
   - tar xf gpgmebits-trusty.tar.gz
   - find . -name '*.deb' -exec sudo dpkg -i {} \;
   - cd ..
-
+  - # Plasma Qt Platform Theme plugin
+  - git clone https://github.com/KDE/plasma-integration
+  - cd plasma-integration
+  - cmake . -DCMAKE_INSTALL_PREFIX=/opt/qt59/
+  - make && sudo make install
+  - cd ..
+  - find /opt | grep plasma
+  
 script:
   - cmake . -DCMAKE_INSTALL_PREFIX=/usr
   - make -j4
