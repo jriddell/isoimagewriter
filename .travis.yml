@@ -41,7 +41,7 @@ script:
   - cmake . -DCMAKE_INSTALL_PREFIX=/usr
   - make -j4
   - make DESTDIR=appdir install ; find appdir/
-  - cp res/icon-rosa.svg appdir/drive-removable-media.svg
+  - ( mkdir -p appdir/usr/share/icons/hicolor/scalable/apps/ ; cd  appdir/usr/share/icons/hicolor/scalable/apps/ ; wget "https://cgit.kde.org/breeze-icons.git/plain/icons/devices/64/drive-removable-media.svg" )
 
 after_success:
   - wget -c "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage" 
