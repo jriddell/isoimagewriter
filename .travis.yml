@@ -26,7 +26,7 @@ install:
   - wget -c "http://embra.edinburghlinux.co.uk/~jr/gpgmebits-trusty.tar.gz"
   - tar xf gpgmebits-trusty.tar.gz
   - find . -name '*.deb' -exec sudo dpkg -i {} \;
-  - apt -f install
+  - sudo apt -f install
   - cd ..
   - # Plasma Qt Platform Theme plugin
   - #git clone https://github.com/KDE/plasma-integration
