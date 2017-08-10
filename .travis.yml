@@ -25,17 +25,17 @@ install:
   - mkdir deps ; cd deps
   - wget -c "http://embra.edinburghlinux.co.uk/~jr/gpgmebits-trusty.tar.gz"
   - tar xf gpgmebits-trusty.tar.gz
-  - wget -c "http://embra.edinburghlinux.co.uk/~jr/breeze-icon-theme_5.36.0-0neon+16.04+xenial+build35_all.deb"
   - find . -name '*.deb' -exec sudo dpkg -i {} \;
+  - apt -f install
   - cd ..
   - # Plasma Qt Platform Theme plugin
-  - git clone https://github.com/KDE/plasma-integration
-  - cd plasma-integration
-  - wget -c "http://embra.edinburghlinux.co.uk/~jr/plasma-integration-nowayland.diff"
-  - patch -p1 < plasma-integration-nowayland.diff
-  - cmake . -DCMAKE_INSTALL_PREFIX=/opt/qt59/
-  - make && sudo make install
-  - cd ..
+  - #git clone https://github.com/KDE/plasma-integration
+  - #cd plasma-integration
+  - #wget -c "http://embra.edinburghlinux.co.uk/~jr/plasma-integration-nowayland.diff"
+  - #patch -p1 < plasma-integration-nowayland.diff
+  - #cmake . -DCMAKE_INSTALL_PREFIX=/opt/qt59/
+  - #make && sudo make install
+  - #cd ..
   - find /opt | grep plasma
   
 script:
