@@ -19,6 +19,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Implementation of MainDialog
 
+#include <KIconLoader>
+#include <KPixmapSequence>
+
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QDropEvent>
@@ -30,6 +33,7 @@
 #include <QRegularExpression>
 #include <QDebug>
 #include <QLoggingCategory>
+#include <QMovie>
 
 #include "common.h"
 #include "mainapplication.h"
@@ -38,6 +42,10 @@
 #include "imagewriter.h"
 #include "usbdevice.h"
 #include "isoimagewriter_debug.h"
+#include "verifyneoniso.h"
+#include "verifynetrunneriso.h"
+#include "verifykubuntuiso.h"
+#include "verifyarchiso.h"
 
 MainDialog::MainDialog(QWidget *parent) :
     QDialog(parent),
@@ -68,6 +76,7 @@ MainDialog::MainDialog(QWidget *parent) :
     ui->introLabel->setText(i18n("Select an ISO image file to write to a USB disk"));
     ui->imageSelectButton->setIcon(QIcon::fromTheme("folder-open"));
     ui->deviceRefreshButton->setIcon(QIcon::fromTheme("view-refresh"));
+    ui->verificationResultLabel->hide();
     m_writeButton = ui->buttonBox->button(QDialogButtonBox::Yes);
     m_clearButton = ui->buttonBox->button(QDialogButtonBox::Reset);
     m_cancelButton = ui->buttonBox->button(QDialogButtonBox::Cancel);
@@ -80,8 +89,6 @@ MainDialog::MainDialog(QWidget *parent) :
     m_cancelButton->hide();
     // Remove the Context Help button and add the Minimize button to the titlebar
     setWindowFlags((windowFlags() | Qt::CustomizeWindowHint | Qt::WindowMinimizeButtonHint) & ~Qt::WindowContextHelpButtonHint);
-    // Disallow to change the dialog height
-    setFixedHeight(size().height());
     // Start in the "idle" mode
     hideWritingProgress();
     // Change default open dir
@@ -132,6 +139,33 @@ void MainDialog::preprocessImageFile(const QString& newImageFile)
     f.close();
     m_ImageFile = newImageFile;
     ui->imageEdit->setText(QDir::toNativeSeparators(m_ImageFile) + " " + i18n("(%1 MiB)", QString::number(alignNumberDiv(m_ImageSize, DEFAULT_UNIT))));
+
+    m_busyWidget = new KPixmapSequenceOverlayPainter(this);
+    m_busyWidget->setSequence(KIconLoader::global()->loadPixmapSequence("process-working", KIconLoader::SizeSmallMedium));
+    m_busyWidget->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+    m_busyWidget->setWidget(ui->busySpinner);
+    ui->busySpinner->setFixedSize(24, 24);
+    ui->busySpinner->show();
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    m_busyWidget->start();
+
+    IsoResult isoResult = verifyISO();
+
+    ui->busySpinner->hide();
+    m_busyWidget->stop();
+    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    delete m_busyWidget;
+    
+    if (isoResult.resultType == Invalid) {
+        QMessageBox::critical(this, i18n("Invalid ISO"), i18n("ISO is invalid:<p>%1", isoResult.error));
+        return;
+    } else if (isoResult.resultType == DinnaeKen) {
+        QMessageBox::StandardButton warningResult = QMessageBox::warning(this, i18n("Could not Verify ISO"), i18n("%1<p>Do you want to continue", isoResult.error), 
+                                                                         QMessageBox::Yes|QMessageBox::No);
+        if (warningResult == QMessageBox::No) {
+            return;
+        }
+    }
     // Enable the Write button (if there are USB flash disks present)
     m_writeButton->setEnabled(ui->deviceList->count() > 0);
 }
@@ -294,6 +328,85 @@ void MainDialog::enumFlashDevices()
     m_clearButton->setEnabled(ui->deviceList->count() > 0);
 }
 
+// TODO currently separate classes for each distro, should be made 
+// much more generic to avoid overhead and repetition
+IsoResult MainDialog::verifyISO() {
+    ui->verificationResultLabel->show();
+    ui->verificationResultLabel->setText(i18n("Running ISO verification, please wait..."));
+
+    QCoreApplication::instance()->processEvents();
+    IsoResult result;
+    VerifyNeonISO verifyNeon(m_ImageFile);
+    if (verifyNeon.canVerify()) {
+        if (verifyNeon.isValid()) {
+            ui->verificationResultLabel->setText(i18n("Verified as valid KDE neon ISO"));
+            result.resultType = Fine;
+            result.error = i18n("Verified as valid KDE neon ISO");
+            return result;
+        } else {
+            QString error(i18n("Invalid KDE neon image"));
+            ui->verificationResultLabel->show();
+            ui->verificationResultLabel->setText(verifyNeon.m_error);
+            result.resultType = Invalid;
+            result.error = verifyNeon.m_error;
+            return result;
+        }
+    }
+    VerifyArchISO verifyArch(m_ImageFile);
+    if (verifyArch.canVerify()) {
+        if (verifyArch.isValid()) {
+            ui->verificationResultLabel->setText(i18n("Verified as valid Arch ISO"));
+            result.resultType = Fine;
+            result.error = i18n("Verified as valid Arch ISO");
+            return result;
+        } else {
+            QString error(i18n("Invalid Arch image"));
+            ui->verificationResultLabel->show();
+            ui->verificationResultLabel->setText(verifyArch.m_error);
+            result.resultType = Invalid;
+            result.error = verifyArch.m_error;
+            return result;
+        }
+    }
+    VerifyNetrunnerISO verifyNetrunner(m_ImageFile);
+    if (verifyNetrunner.canVerify()) {
+        if (verifyNetrunner.isValid()) {
+            ui->verificationResultLabel->setText(i18n("Verified as valid Netrunner ISO"));
+            result.resultType = Fine;
+            result.error = i18n("Verified as valid Netrunner ISO");
+            return result;
+        } else {
+            QString error(i18n("Invalid Netrunner image"));
+            ui->verificationResultLabel->setText(verifyNetrunner.m_error);
+            result.resultType = Invalid;
+            result.error = verifyNetrunner.m_error;
+            return result;
+        }
+    }    
+    VerifyKubuntuISO verifyKubuntu(m_ImageFile);
+    if (verifyKubuntu.canVerify()) {
+        if (verifyKubuntu.isValid()) {
+            ui->verificationResultLabel->setText(i18n("Verified as valid Kubuntu ISO"));
+            result.resultType = Fine;
+            result.error = i18n("Verified as valid Kubuntu ISO");
+            return result;
+        } else {
+            QString error(i18n("Invalid Kubuntu image"));
+            ui->verificationResultLabel->show();
+            ui->verificationResultLabel->setText(verifyKubuntu.m_error);
+            result.resultType = Invalid;
+            result.error = verifyKubuntu.m_error;
+            return result;
+        }
+    }    
+    QString error(i18n("Could not verify as a known distro image."));
+    qDebug() << "verify error: " << error;
+    ui->verificationResultLabel->setText(error);
+    result.resultType = DinnaeKen;
+    result.error = QString(i18n("Could not verify as a known distro image."));
+    return result;
+}
+
 // Starts writing data to the device
 void MainDialog::writeToDeviceKAuth(bool zeroing)
 {
@@ -320,7 +433,7 @@ void MainDialog::writeToDeviceKAuth(bool zeroing)
     wipeWarningBox.setIcon(QMessageBox::Warning);
     wipeWarningBox.addButton(QMessageBox::Ok);
     wipeWarningBox.addButton(QMessageBox::Cancel);
-    wipeWarningBox.button(QMessageBox::Ok)->setText(i18n("Clear Disk"));
+    wipeWarningBox.button(QMessageBox::Ok)->setText(i18n("Clear Disk and Write Image"));
     wipeWarningBox.exec();
     if (wipeWarningBox.result() != QMessageBox::Ok) {
         return;
@@ -362,6 +475,7 @@ void MainDialog::cancelWriting() {
 }
 
 void MainDialog::progressStep(KJob* job, unsigned long step) {
+    Q_UNUSED(job)
     qCDebug(ISOIMAGEWRITER_LOG) << "progressStep %() " << step;
     updateProgressBar(step);
 }
@@ -448,8 +562,10 @@ void MainDialog::hideWritingProgress()
     ui->deviceList->setEnabled(true);
     ui->deviceRefreshButton->setEnabled(true);
 
-    // Hide the progress bar
+    // Hide the progress bar and verification label
+    ui->verificationResultLabel->hide();
     ui->progressBar->setVisible(false);
+    ui->busySpinner->hide();
     ui->progressBarSpacer->changeSize(10, 10, QSizePolicy::Expanding, QSizePolicy::Fixed);
     m_writeButton->setVisible(true);
     m_clearButton->setVisible(true);

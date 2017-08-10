@@ -16,8 +16,10 @@ include(ECMQtDeclareLoggingCategory)
 
 option(ROSA_BRANDING "Build with ROSA branding" OFF)
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIBUDEV REQUIRED libudev)
+if(CMAKE_SYSTEM_NAME STREQUAL Linux)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(LIBUDEV REQUIRED libudev)
+endif()
 
 find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS Core Gui Widgets)
 
@@ -25,11 +27,14 @@ find_package(KF5 REQUIRED COMPONENTS
     I18n
     CoreAddons
     Auth
+    WidgetsAddons
+    IconThemes
 )
 
 KDE_ENABLE_EXCEPTIONS()
 
 add_subdirectory(isoimagewriter)
 add_subdirectory(images)
+add_subdirectory(signing-keys)
 
 feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES FATAL_ON_MISSING_REQUIRED_PACKAGES)

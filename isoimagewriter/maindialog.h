@@ -21,6 +21,7 @@
 // MainDialog is the main application window
 
 #include <KAuth>
+#include <KPixmapSequenceOverlayPainter>
 
 #include <QDialog>
 
@@ -30,6 +31,12 @@
 namespace Ui {
     class MainDialog;
 }
+
+enum VerificationResult { Fine, DinnaeKen, Invalid };
+struct IsoResult {
+    VerificationResult resultType;
+    QString error;
+};
 
 class MainDialog : public QDialog
 {
@@ -43,8 +50,10 @@ private:
     Ui::MainDialog *ui;
     QPushButton *m_writeButton, *m_clearButton, *m_cancelButton;
     KAuth::ExecuteJob *m_job;
+    IsoResult verifyISO();
 
 protected:
+
     // Image file currently selected by the user
     QString m_ImageFile;
     // Size of the image file (cached here to avoid excessive file system requests)
@@ -76,6 +85,8 @@ protected:
 
     // Reloads the list of USB flash disks
     void enumFlashDevices();
+
+    KPixmapSequenceOverlayPainter *m_busyWidget;
 
 public slots:
     // Suggests to select image file using the Open File dialog
