@@ -8,7 +8,7 @@ before_install:
   - sudo apt-get update -qq
     
 install: 
-  - sudo apt-get -y install qt59base qt59tools qt59translations qt59x11extras libudev-dev libassuan-dev
+  - sudo apt-get -y install qt59base qt59tools qt59translations qt59x11extras libudev-dev libassuan-dev hicolor-icon-theme
   - source /opt/qt*/bin/qt*-env.sh
   - # Precompiled KF5
   - wget -c "https://github.com/chigraph/precompiled-kf5-linux/releases/download/precompiled/kf5-gcc6-linux64-release.tar.xz"
@@ -25,6 +25,7 @@ install:
   - mkdir deps ; cd deps
   - wget -c "http://embra.edinburghlinux.co.uk/~jr/gpgmebits-trusty.tar.gz"
   - tar xf gpgmebits-trusty.tar.gz
+  - wget -c "http://embra.edinburghlinux.co.uk/~jr/breeze-icon-theme_5.36.0-0neon+16.04+xenial+build35_all.deb"
   - find . -name '*.deb' -exec sudo dpkg -i {} \;
   - cd ..
   - # Plasma Qt Platform Theme plugin
